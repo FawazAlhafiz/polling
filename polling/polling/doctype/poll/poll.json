@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-07-02 22:30:22.688614",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "column_break_iobs",
+  "title",
+  "description",
+  "start_date",
+  "end_date",
+  "is_active",
+  "allow_multiple_answers",
+  "poll_type",
+  "targer_audience",
+  "poll_options"
+ ],
+ "fields": [
+  {
+   "fieldname": "column_break_iobs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_multiple_answers",
+   "fieldtype": "Check",
+   "label": "Allow Multiple Answers"
+  },
+  {
+   "fieldname": "poll_type",
+   "fieldtype": "Select",
+   "label": "Poll Type",
+   "options": "Public\nPrivate"
+  },
+  {
+   "fieldname": "targer_audience",
+   "fieldtype": "Table",
+   "label": "Targer Audience",
+   "options": "Poll Target"
+  },
+  {
+   "fieldname": "poll_options",
+   "fieldtype": "Table",
+   "label": "Poll Options",
+   "options": "Poll Option"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-02 22:50:31.600257",
+ "modified_by": "Administrator",
+ "module": "Polling",
+ "name": "Poll",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

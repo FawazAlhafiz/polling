@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-07-02 22:48:17.024841",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "option_text",
+  "image",
+  "vote_count"
+ ],
+ "fields": [
+  {
+   "fieldname": "option_text",
+   "fieldtype": "Data",
+   "label": "Option Text"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  },
+  {
+   "fieldname": "vote_count",
+   "fieldtype": "Int",
+   "label": "Vote Count",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-07-02 22:50:11.684890",
+ "modified_by": "Administrator",
+ "module": "Polling",
+ "name": "Poll Option",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
