@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "format:Poll-{####}-{title}",
  "creation": "2025-07-02 22:30:22.688614",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -75,10 +76,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-02 22:50:31.600257",
+ "modified": "2025-07-02 23:12:38.297157",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
