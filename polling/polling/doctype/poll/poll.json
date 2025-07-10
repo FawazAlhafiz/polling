@@ -6,7 +6,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "column_break_iobs",
   "title",
   "description",
   "start_date",
@@ -18,10 +17,6 @@
   "poll_options"
  ],
  "fields": [
-  {
-   "fieldname": "column_break_iobs",
-   "fieldtype": "Column Break"
-  },
   {
    "fieldname": "title",
    "fieldtype": "Data",
@@ -76,7 +71,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-02 23:12:38.297157",
+ "modified": "2025-07-10 10:50:27.839292",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll",
