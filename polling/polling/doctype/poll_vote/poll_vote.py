@@ -28,13 +28,9 @@ class PollVote(Document):
 		if not self.is_valid_date():
 			frappe.throw("This poll is closed for voting.")
 
-	# Custom validation to ensure:
+		if not self.user_has_voted():
+			frappe.throw("You have already voted in this poll.")
 
-	# Users can't vote after end_date
-
-	# Users can only vote once (unless configured otherwise)
-
-	# Users can only vote if they're in the target audience
 
 	def user_is_in_target_audience(self) -> bool:
 		""" Check if the user is in the target audience of the poll"""
@@ -53,6 +49,10 @@ class PollVote(Document):
 		if self.poll and self.poll.end_date:
 			return self.poll.end_date > frappe.utils.now()
 		
+	def user_has_voted(self) -> bool:
+		""" Check if the user has already voted in this poll"""
+		polls_voted = frappe.get_all("Poll Vote", filters={"poll": self.poll, "voter": self.user}, fields=["name"])
+		return bool(polls_voted)
 
 			# 
 	def before_submit(self):
