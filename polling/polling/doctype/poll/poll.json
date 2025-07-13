@@ -8,12 +8,13 @@
  "field_order": [
   "title",
   "description",
+  "targer_audience",
+  "column_break_ccfv",
   "start_date",
   "end_date",
   "is_active",
   "allow_multiple_answers",
   "poll_type",
-  "targer_audience",
   "poll_options"
  ],
  "fields": [
@@ -66,12 +67,16 @@
    "fieldtype": "Table",
    "label": "Poll Options",
    "options": "Poll Option"
+  },
+  {
+   "fieldname": "column_break_ccfv",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-10 10:50:27.839292",
+ "modified": "2025-07-10 10:56:13.503792",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll",

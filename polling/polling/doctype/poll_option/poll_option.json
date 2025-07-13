@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "field:option_text",
  "creation": "2025-07-02 22:48:17.024841",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -15,7 +16,8 @@
    "fieldname": "option_text",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Option Text"
+   "label": "Option Text",
+   "unique": 1
   },
   {
    "fieldname": "image",
@@ -34,10 +36,11 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-02 23:09:02.323875",
+ "modified": "2025-07-10 11:05:20.241262",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll Option",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
