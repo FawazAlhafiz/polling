@@ -54,12 +54,13 @@ class PollVote(Document):
 		polls_voted = frappe.get_all("Poll Vote", filters={"poll": self.poll, "voter": self.user}, fields=["name"])
 		return bool(polls_voted)
 
-			# 
 	def before_submit(self):
-		# Ensure that the poll is not closed before allowing a vote
-		if self.poll and self.poll.is_closed():
-			frappe.throw("Cannot vote on a closed poll.")
+		# Increment the vote_count on the Poll Option
+		self.increment_vote_count()
 
-		# Ensure that the user has not already voted in this poll
-		if self.poll and self.poll.has_voted(self.user):
-			frappe.throw("You have already voted in this poll.")
+	def increment_vote_count(self):
+		""" Increment the vote count for the option"""
+		option = frappe.get_cached_doc("Poll Option", self.option, {'parent': self.poll})
+		option.vote_count += 1
+		option.save()
+	
