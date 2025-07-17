@@ -5,19 +5,36 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_eeuz"
+  "poll_title",
+  "total_votes",
+  "options"
  ],
  "fields": [
   {
-   "fieldname": "section_break_eeuz",
-   "fieldtype": "Section Break"
+   "fieldname": "poll_title",
+   "fieldtype": "Data",
+   "label": "Poll Title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_votes",
+   "fieldtype": "Int",
+   "label": "Total Votes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Table",
+   "label": "Options",
+   "options": "Poll Result Option",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-07-02 22:56:33.289077",
+ "modified": "2025-07-17 19:14:51.257252",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll Result",
