@@ -15,7 +15,7 @@
   "is_active",
   "allow_multiple_answers",
   "poll_type",
-  "poll_options"
+  "options"
  ],
  "fields": [
   {
@@ -63,20 +63,20 @@
    "options": "Poll Target"
   },
   {
-   "fieldname": "poll_options",
-   "fieldtype": "Table",
-   "label": "Poll Options",
-   "options": "Poll Option"
-  },
-  {
    "fieldname": "column_break_ccfv",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Table",
+   "label": "Options",
+   "options": "Poll Option"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-10 10:56:13.503792",
+ "modified": "2025-07-20 21:21:17.680379",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll",
