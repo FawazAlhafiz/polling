@@ -3,55 +3,62 @@
 
 import frappe
 from frappe.model.document import Document
-
+from frappe.utils import getdate
 
 class PollVote(Document):
-	def vallidate(self):
+	def validate(self):
 		# Ensure that the poll exists before proceeding
 		if not self.poll:
 			frappe.throw("Poll is required to cast a vote.")
 
 		# Ensure that the user exists before proceeding
-		if not self.user:
+		if not self.voter:
 			frappe.throw("User is required to cast a vote.")
 
 		# Ensure that the option exists before proceeding
 		if not self.option:
 			frappe.throw("Option is required to cast a vote.")
 
-		if not self.user_is_in_target_audience():
+		poll_doc = frappe.get_cached_doc("Poll", self.poll)
+
+		if not self.user_is_in_target_audience(poll_doc):
 			frappe.throw("You are not in the target audience for this poll.")
 
-		if not self.poll_is_active():
+		if not self.poll_is_active(poll_doc):
 			frappe.throw("This poll is not open for voting.")
 
-		if not self.is_valid_date():
+		if not self.is_valid_date(poll_doc):
 			frappe.throw("This poll is closed for voting.")
 
 		if not self.user_has_voted():
 			frappe.throw("You have already voted in this poll.")
 
 
-	def user_is_in_target_audience(self) -> bool:
-		""" Check if the user is in the target audience of the poll"""
-		if self.poll and self.poll.target_audience:
-			return self.user in self.poll.target_audience
+	def user_is_in_target_audience(self, poll) -> bool:
+		return True
+	# 	""" Check if the user is in the target audience of the poll"""
+	# 	if self.poll and poll.target_audience:
+	# 		return self.voter in poll.target_audience
 		
-		return True  # If no target audience is set, allow voting by default
+		# return True  # If no target audience is set, allow voting by default
 	
-	def poll_is_active(self) -> bool:
+	def poll_is_active(self, poll) -> bool:
 		""" Check if the poll is open"""
-		if self.poll  and not self.poll.is_active():
+		if self.poll and not poll.is_active:
 			return False
 		
-	def is_valid_date(self) -> bool:
+		return True
+		
+	def is_valid_date(self, poll) -> bool:
 		""" Check if the poll is still open for voting based on end_date"""
-		if self.poll and self.poll.end_date:
-			return self.poll.end_date > frappe.utils.now()
+		if self.poll and poll.end_date:
+			return poll.end_date > getdate()
+		
+		return True
 		
 	def user_has_voted(self) -> bool:
 		""" Check if the user has already voted in this poll"""
-		polls_voted = frappe.get_all("Poll Vote", filters={"poll": self.poll, "voter": self.user}, fields=["name"])
+		polls_voted = frappe.get_all("Poll Vote", filters={"poll": self.poll, "voter": self.voter}, fields=["name"])
 		return bool(polls_voted)
 
 	def before_submit(self):
