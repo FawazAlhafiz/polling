@@ -10,10 +10,9 @@ class PollResult(Document):
 	def db_insert(self, *args, **kwargs):
 		pass
 
-	def load_from_db(self):
-		# This is where we compute results on demand
-		poll_name = self.name  # For virtual doctypes, name is passed in filter
-		poll = frappe.get_doc("Poll", poll_name)
+	def load_from_db(self) -> None:
+		"""Load poll result data from the database of Poll document."""
+		poll = frappe.get_doc("Poll", self.name)
 
 		total_votes = sum(option.vote_count for option in poll.options)
 
@@ -26,8 +25,14 @@ class PollResult(Document):
 				'percentage': round(percent, 1)
 			})
 
-		self.total_votes = total_votes
-		self.poll_title = poll.title
+		data = {
+			'name': poll.name,
+			'poll_title': poll.title,
+			'total_votes': total_votes,
+			'options': self.options
+		}
+		
+		super(Document, self).__init__(frappe._dict(data))
 
 	def db_update(self):
 		pass
