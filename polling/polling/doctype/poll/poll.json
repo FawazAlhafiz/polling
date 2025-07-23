@@ -8,14 +8,15 @@
  "field_order": [
   "title",
   "description",
-  "targer_audience",
   "column_break_ccfv",
   "start_date",
   "end_date",
   "is_active",
   "allow_multiple_answers",
   "poll_type",
-  "options"
+  "section_break_ocxy",
+  "options",
+  "targer_audience"
  ],
  "fields": [
   {
@@ -71,12 +72,16 @@
    "fieldtype": "Table",
    "label": "Options",
    "options": "Poll Option"
+  },
+  {
+   "fieldname": "section_break_ocxy",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-20 21:21:17.680379",
+ "modified": "2025-07-23 22:18:35.162984",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll",
@@ -97,7 +102,9 @@
   }
  ],
  "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "title"
 }
