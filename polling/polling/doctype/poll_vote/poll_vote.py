@@ -7,30 +7,36 @@ from frappe.utils import getdate
 
 class PollVote(Document):
 	def validate(self):
-		# Ensure that the poll exists before proceeding
+		""" Validate the vote before saving"""
+		self.validate_mandatory_fields()
+	
+
+	def validate_mandatory_fields(self) -> None:
+		""" Validate mandatory fields for the Poll Vote"""
 		if not self.poll:
 			frappe.throw("Poll is required to cast a vote.")
 
-		# Ensure that the user exists before proceeding
 		if not self.voter:
 			frappe.throw("User is required to cast a vote.")
 
-		# Ensure that the option exists before proceeding
 		if not self.option:
 			frappe.throw("Option is required to cast a vote.")
+		
 
+	def before_submit(self) -> None:
+		""" Perform actions before submitting the vote"""
 		poll_doc = frappe.get_cached_doc("Poll", self.poll)
 
 		if not self.user_is_in_target_audience(poll_doc):
 			frappe.throw("You are not in the target audience for this poll.")
 
 		if not self.poll_is_active(poll_doc):
-			frappe.throw("This poll is not open for voting.")
+			frappe.throw("This poll is not active for voting.")
 
 		if not self.is_valid_date(poll_doc):
-			frappe.throw("This poll is closed for voting.")
+			frappe.throw("This poll date is expired.")
 
-		if not self.user_has_voted():
+		if self.user_has_voted():
 			frappe.throw("You have already voted in this poll.")
 
 
@@ -58,10 +64,11 @@ class PollVote(Document):
 		
 	def user_has_voted(self) -> bool:
 		""" Check if the user has already voted in this poll"""
-		polls_voted = frappe.get_all("Poll Vote", filters={"poll": self.poll, "voter": self.voter}, fields=["name"])
+		polls_voted = frappe.get_all("Poll Vote", filters={"poll": self.poll, "voter": self.voter, "docstatus": 1}, fields=["name"])
 		return bool(polls_voted)
 
-	def before_submit(self):
+	def on_submit(self) -> None:
+		""" Actions to perform when submitting the vote"""
 		# Increment the vote_count on the Poll Option
 		self.increment_vote_count()
 
