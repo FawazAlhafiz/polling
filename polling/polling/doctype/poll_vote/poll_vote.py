@@ -12,7 +12,13 @@ class PollVote(Document):
 	
 
 	def validate_mandatory_fields(self) -> None:
-		""" Validate mandatory fields for the Poll Vote"""
+		""" 
+		Validate mandatory fields for the Poll Vote
+		that include: 
+			- poll
+			- voter
+			- option
+		"""
 		if not self.poll:
 			frappe.throw("Poll is required to cast a vote.")
 
@@ -24,7 +30,7 @@ class PollVote(Document):
 		
 
 	def before_submit(self) -> None:
-		""" Perform actions before submitting the vote"""
+		""" run actions before submitting the vote"""
 		poll_doc = frappe.get_cached_doc("Poll", self.poll)
 
 		if not self.user_is_in_target_audience(poll_doc):
@@ -48,19 +54,19 @@ class PollVote(Document):
 		
 		# return True  # If no target audience is set, allow voting by default
 	
-	def poll_is_active(self, poll) -> bool:
-		""" Check if the poll is open"""
-		if self.poll and not poll.is_active:
-			return False
+	def poll_is_active(self, poll: Document) -> bool:
+		""" Check if the poll is active"""
+		if poll and poll.is_active:
+			return True
 		
-		return True
+		return False
 		
-	def is_valid_date(self, poll) -> bool:
+	def is_valid_date(self, poll: Document) -> bool:
 		""" Check if the poll is still open for voting based on end_date"""
-		if self.poll and poll.end_date:
+		if poll and poll.end_date:
 			return poll.end_date > getdate()
 		
-		return True
+		return False
 		
 	def user_has_voted(self) -> bool:
 		""" Check if the user has already voted in this poll"""
