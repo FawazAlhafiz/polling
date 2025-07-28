@@ -7,11 +7,17 @@ const routes = [
 		path: "/",
 		name: "Home",
 		component: () => import("@/pages/Home.vue"),
+		redirect: { name: "PollsListPage" },
 	},
 	{
 		name: "Login",
 		path: "/account/login",
 		component: () => import("@/pages/Login.vue"),
+	},
+	{
+		path: "/polls",
+		name: "PollsListPage",
+		component: () => import("@/pages/Polls.vue"),
 	},
 ]
 
