@@ -64,7 +64,7 @@ class PollVote(Document):
 	def is_valid_date(self, poll: Document) -> bool:
 		""" Check if the poll is still open for voting based on end_date"""
 		if poll and poll.end_date:
-			return poll.end_date > getdate()
+			return poll.end_date >= getdate()
 		
 		return False
 		
