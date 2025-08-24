@@ -1,0 +1,2 @@
+import{i as r,j as n,a as e,f as i,F as c,k as d,l as u,o as t,t as p}from"./index-upOFdLO4.js";const m={key:0},v={__name:"Polls",setup(_){const l=r({doctype:"Poll",fields:["name","title","description","start_date","end_date"],auto:!0}),s=n(()=>l.list.data||[]);return(f,a)=>(t(),e("div",null,[a[0]||(a[0]=i("h1",{class:"text-3xl font-bold"},"👌polls page",-1)),s.value?(t(),e("div",m,[(t(!0),e(c,null,d(s.value,o=>(t(),e("p",{key:o.name},p(o.title),1))),128))])):u("",!0)]))}};export{v as default};
+//# sourceMappingURL=Polls-VhC0Wdce.js.map
