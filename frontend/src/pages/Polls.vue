@@ -84,12 +84,92 @@
                 🔄 Refresh Polls
             </button>
         </div>
+
+        <!-- Voting Dialog -->
+        <Dialog v-model="showVotingDialog">
+            <template #body-title>
+                <h3 class="text-xl font-semibold text-blue-600">
+                    🗳️ Vote on Poll
+                </h3>
+            </template>
+            
+            <template #body-content>
+                <div v-if="selectedPoll" class="space-y-6">
+                    <!-- Poll Info -->
+                    <div class="border-b border-gray-200 pb-4">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">
+                            {{ selectedPoll.title }}
+                        </h4>
+                        <p v-if="selectedPoll.description" class="text-gray-600 text-sm">
+                            {{ selectedPoll.description }}
+                        </p>
+                    </div>
+
+                    <!-- Loading Poll Options -->
+                    <div v-if="pollDetailResource.loading" class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <p class="mt-2 text-gray-600">Loading poll options...</p>
+                    </div>
+
+                    <!-- Poll Options -->
+                    <div v-else-if="pollOptions.length" class="space-y-3">
+                        <h4 class="font-medium text-gray-900 mb-3">Select your choice:</h4>
+                        <div class="space-y-2">
+                            <label 
+                                v-for="option in pollOptions" 
+                                :key="option.name || option.option_text"
+                                class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                                :class="{ 'border-blue-500 bg-blue-50': selectedOption === option.option_text }"
+                            >
+                                <input 
+                                    type="radio" 
+                                    :value="option.option_text" 
+                                    v-model="selectedOption"
+                                    class="mr-3 text-blue-600 focus:ring-blue-500"
+                                >
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900">{{ option.option_text }}</div>
+                                    <div v-if="option.description" class="text-sm text-gray-600 mt-1">
+                                        {{ option.description }}
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- No Options -->
+                    <div v-else class="text-center py-8">
+                        <div class="text-4xl mb-2">❌</div>
+                        <p class="text-gray-600">No options available for this poll.</p>
+                    </div>
+                </div>
+            </template>
+            
+            <template #actions="{ close }">
+                <div class="flex justify-start flex-row-reverse gap-2">
+                    <Button 
+                        variant="solid"
+                        @click="submitVote"
+                        :disabled="!selectedOption || submittingVote"
+                    >
+                        <span v-if="submittingVote">Submitting...</span>
+                        <span v-else>🗳️ Submit Vote</span>
+                    </Button>
+                    <Button 
+                        variant="outline"
+                        @click="close"
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </template>
+        </Dialog>
     </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { createListResource } from 'frappe-ui';
+import { computed, ref } from 'vue';
+import { createListResource, createResource, Dialog, Button } from 'frappe-ui';
 
 const pollsResource = createListResource({
     doctype: 'Poll',
@@ -98,6 +178,37 @@ const pollsResource = createListResource({
 });
 
 const pollsList = computed(() => pollsResource.list.data || []);
+
+// Voting Dialog State
+const showVotingDialog = ref(false);
+const selectedPoll = ref(null);
+const selectedOption = ref('');
+const submittingVote = ref(false);
+
+// Poll Detail Resource (to get poll with options)
+const pollDetailResource = createResource({
+    url: 'frappe.client.get',
+    auto: false,
+});
+
+const pollOptions = computed(() => {
+    if (selectedPoll.value && selectedPoll.value.options) {
+        return selectedPoll.value.options || [];
+    }
+    return [];
+});
+
+// Vote Submission Resource
+const voteResource = createResource({
+    url: 'frappe.client.insert',
+    auto: false,
+});
+
+// Submit Vote Resource (to change status from Draft to Submitted)
+const submitVoteResource = createResource({
+    url: 'frappe.client.submit',
+    auto: false,
+});
 
 // Utility functions
 const refreshPolls = () => {
@@ -154,11 +265,70 @@ const canParticipate = (poll) => {
     return hasStarted && hasNotEnded;
 };
 
-const participateInPoll = (poll) => {
-    // Navigate to poll participation page
-    console.log('Participating in poll:', poll.name);
-    alert(`Participating in poll: ${poll.title}`);
-    // You can implement navigation logic here
+// Voting Functions
+const participateInPoll = async (poll) => {
+    selectedOption.value = '';
+    showVotingDialog.value = true;
+    
+    // Load full poll document with options
+    try {
+        const pollData = await pollDetailResource.submit({
+            doctype: 'Poll',
+            name: poll.name
+        });
+        selectedPoll.value = pollData;
+    } catch (error) {
+        console.error('Error loading poll details:', error);
+        alert('Error loading poll details. Please try again.');
+        closeVotingDialog();
+    }
+};
+
+const closeVotingDialog = () => {
+    showVotingDialog.value = false;
+    selectedPoll.value = null;
+    selectedOption.value = '';
+    submittingVote.value = false;
+};
+
+const submitVote = async () => {
+    if (!selectedOption.value || !selectedPoll.value) return;
+    
+    submittingVote.value = true;
+    
+    try {
+        // Step 1: Insert the document (creates it in Draft status)
+        const insertedVote = await voteResource.submit({
+            doc: {
+                doctype: 'Poll Vote',
+                poll: selectedPoll.value.name,
+                option: selectedOption.value, // This should be the option text or identifier
+                voter: 'Administrator', // This should be the current user's email
+            }
+        });
+        
+        // Step 2: Submit the document (changes status from Draft to Submitted)
+        await submitVoteResource.submit({
+            doc: insertedVote
+        });
+        
+        // Show success message
+        alert(`✅ Your vote has been submitted successfully!`);
+        
+        // Close dialog and cleanup
+        showVotingDialog.value = false;
+        selectedPoll.value = null;
+        selectedOption.value = '';
+        
+        // Optionally refresh the polls list
+        refreshPolls();
+        
+    } catch (error) {
+        console.error('Error submitting vote:', error);
+        alert('❌ Error submitting vote. Please try again.');
+    } finally {
+        submittingVote.value = false;
+    }
 };
 
 const viewResults = (poll) => {
