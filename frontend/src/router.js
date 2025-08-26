@@ -19,6 +19,12 @@ const routes = [
 		name: "PollsListPage",
 		component: () => import("@/pages/Polls.vue"),
 	},
+	{
+		path: "/polls/:id/results",
+		name: "PollResults",
+		component: () => import("@/pages/PollResults.vue"),
+		props: true,
+	},
 ]
 
 const router = createRouter({

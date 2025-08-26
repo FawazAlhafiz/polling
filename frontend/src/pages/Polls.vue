@@ -169,7 +169,10 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { createListResource, createResource, Dialog, Button } from 'frappe-ui';
+
+const router = useRouter();
 
 // Function to get current user from cookies (HRMS approach)
 function sessionUser() {
@@ -360,8 +363,6 @@ const submitVote = async () => {
 
 const viewResults = (poll) => {
     // Navigate to poll results page
-    console.log('Viewing results for poll:', poll.name);
-    alert(`Viewing results for: ${poll.title}`);
-    // You can implement navigation logic here
+    router.push(`/polls/${poll.name}/results`);
 };
 </script>
