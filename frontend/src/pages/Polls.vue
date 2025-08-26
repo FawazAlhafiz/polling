@@ -171,6 +171,13 @@
 import { computed, ref } from 'vue';
 import { createListResource, createResource, Dialog, Button } from 'frappe-ui';
 
+// Function to get current user from cookies (HRMS approach)
+function sessionUser() {
+    let cookies = new URLSearchParams(document.cookie.split("; ").join("&"));
+
+    return cookies.get("user_id");
+}
+
 const pollsResource = createListResource({
     doctype: 'Poll',
     fields: ['name', 'title', 'description', 'start_date', 'end_date', 'status'],
@@ -303,7 +310,7 @@ const submitVote = async () => {
                 doctype: 'Poll Vote',
                 poll: selectedPoll.value.name,
                 option: selectedOption.value, // This should be the option text or identifier
-                voter: 'Administrator', // This should be the current user's email
+                voter: sessionUser(), // Current logged-in user
             }
         });
         
