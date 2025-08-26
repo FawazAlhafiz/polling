@@ -66,7 +66,7 @@ class PollVote(Document):
 		if poll and poll.end_date:
 			return poll.end_date >= getdate()
 		
-		return False
+		return True
 		
 	def user_has_voted(self) -> bool:
 		""" Check if the user has already voted in this poll"""
