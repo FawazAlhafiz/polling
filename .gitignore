@@ -5,3 +5,8 @@
 tags
 node_modules
 __pycache__
+
+# Frontend build assets
+polling/public/frontend/assets/
+dist/
+build/
