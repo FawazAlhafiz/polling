@@ -331,8 +331,28 @@ const submitVote = async () => {
         refreshPolls();
         
     } catch (error) {
-        console.error('Error submitting vote:', error);
-        alert('❌ Error submitting vote. Please try again.');
+        // Extract clean error message from error.exc
+        let readableMessage = '';
+        
+        if (error?.exc) {
+            // error.exc contains the full exception traceback
+            // We want to get the second last line which contains the actual error message
+            const excLines = error.exc.split('\n');
+            const rawErrorMessage = excLines[excLines.length - 2].trim();
+            
+            // Extract message after the colon in patterns like:
+            // "frappe.exceptions.ValidationError: You have already voted in this poll."
+            if (rawErrorMessage.includes(':')) {
+                readableMessage = rawErrorMessage.split(':').slice(1).join(':').trim();
+            } else {
+                readableMessage = rawErrorMessage;
+            }
+        }
+        
+        // Map specific poll validation errors to user-friendly messages
+        let userFriendlyMessage = readableMessage || 'Error submitting vote. Please try again.';
+        
+        alert(`❌ ${userFriendlyMessage}`);
     } finally {
         submittingVote.value = false;
     }
