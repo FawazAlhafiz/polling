@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"rzrPmTJvt0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Polling</span>\",\"col\":12}},{\"id\":\"xYnRm_74l6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Polls\",\"col\":4}},{\"id\":\"SatXiIdeW5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Votes\",\"col\":4}},{\"id\":\"Gknq95wdu-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Poll Results\",\"col\":4}}]",
+ "content": "[{\"id\":\"rzrPmTJvt0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Polling</span>\",\"col\":12}},{\"id\":\"xYnRm_74l6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Polls\",\"col\":4}},{\"id\":\"SatXiIdeW5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Votes\",\"col\":4}},{\"id\":\"Gknq95wdu-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Poll Results\",\"col\":4}},{\"id\":\"Gvb3OuZJ9A\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Polling App\",\"col\":3}}]",
  "creation": "2025-07-24 18:56:48.280304",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "Polling",
  "links": [],
- "modified": "2025-07-24 19:02:16.069121",
+ "modified": "2025-08-27 02:01:43.798679",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Polling",
@@ -25,6 +25,13 @@
  "roles": [],
  "sequence_id": 28.0,
  "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Polling App",
+   "type": "URL",
+   "url": "/frontend"
+  },
   {
    "color": "Grey",
    "doc_view": "List",
