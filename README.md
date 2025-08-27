@@ -25,6 +25,8 @@
 ### 🛠️ **Technical Features**
 - **Frappe Framework Backend**: Robust, scalable backend with DocType management
 - **Vue.js Frontend**: Modern, reactive frontend with Composition API
+- **Production Ready**: CSRF token security for production deployments
+- **Error Handling**: Comprehensive validation and user-friendly error messages
 - **Tailwind CSS**: Utility-first styling for consistent design
 - **Frappe UI Components**: Native integration with Frappe UI library
 - **Date Management**: Smart date formatting and poll scheduling
@@ -119,10 +121,18 @@ yarn dev
 
 4. **Build for production:**
 ```bash
-cd apps/polling
+cd apps/polling/frontend
 yarn build
 # or
 bench build --app polling
+```
+
+5. **Production deployment:**
+```bash
+# After building, restart your server
+bench restart
+
+# The app handles CSRF tokens automatically for secure production use
 ```
 
 ### Code Quality Tools
