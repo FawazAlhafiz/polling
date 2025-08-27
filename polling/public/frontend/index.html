@@ -10,6 +10,10 @@
   </head>
   <body>
     <div id="app"></div>
+
+    <script>
+      window.csrf_token = '{{ frappe.session.csrf_token }}'
+    </script>
   
           <script>
               {% for key in boot %}
