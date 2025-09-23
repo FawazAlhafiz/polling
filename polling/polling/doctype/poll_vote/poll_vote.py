@@ -80,7 +80,24 @@ class PollVote(Document):
 
 	def increment_vote_count(self):
 		""" Increment the vote count for the option"""
-		option = frappe.get_cached_doc("Poll Option", self.option, {'parent': self.poll})
+		option = frappe.get_cached_doc("Poll Option", {'parent': self.poll, 'option_text': self.option})
 		option.vote_count += 1
 		option.save()
 	
+
+@frappe.whitelist()
+def get_poll_options(parent_poll):
+    return frappe.db.sql(
+        """
+        SELECT
+            `tabPoll Option`.option_text
+        FROM
+            `tabPoll Option`
+        WHERE
+            `tabPoll Option`.parent = %(parent)s
+        ORDER BY
+            `tabPoll Option`.option_text
+        """,
+        {"parent": parent_poll},
+    )
+

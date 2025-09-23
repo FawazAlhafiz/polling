@@ -21,9 +21,8 @@
   },
   {
    "fieldname": "option",
-   "fieldtype": "Link",
-   "label": "Option",
-   "options": "Poll Option"
+   "fieldtype": "Select",
+   "label": "Option"
   },
   {
    "allow_on_submit": 1,
@@ -57,7 +56,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-27 02:18:37.306568",
+ "modified": "2025-09-23 17:05:58.234666",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll Vote",
