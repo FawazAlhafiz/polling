@@ -56,7 +56,7 @@ class PollVote(Document):
 	
 	def poll_is_active(self, poll: Document) -> bool:
 		""" Check if the poll is active"""
-		if poll and poll.is_active:
+		if poll and poll.status == "Active":
 			return True
 		
 		return False
