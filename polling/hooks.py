@@ -83,7 +83,7 @@ app_license = "mit"
 # ------------
 
 # before_install = "polling.install.before_install"
-# after_install = "polling.install.after_install"
+after_install = "polling.install.after_install"
 
 # Uninstallation
 # ------------
