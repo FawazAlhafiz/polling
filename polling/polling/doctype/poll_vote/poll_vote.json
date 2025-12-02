@@ -25,11 +25,12 @@
    "label": "Option"
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "voter",
    "fieldtype": "Link",
    "label": "Voter",
-   "options": "User"
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
   },
   {
    "default": "now",

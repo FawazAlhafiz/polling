@@ -2,7 +2,8 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Poll Vote", {
-    refresh(frm) {
+    setup(frm) {
+        frm.set_value("voter", frappe.session.user);
     },
     poll(frm) {
         if (!frm.doc.poll) return;
