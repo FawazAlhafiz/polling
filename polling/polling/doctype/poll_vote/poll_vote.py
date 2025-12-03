@@ -2,10 +2,16 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.model.document import Document
+from frappe import _
 from frappe.utils import getdate
+from frappe.model.document import Document
 
 class PollVote(Document):
+	def before_save(self) -> None:
+		""" Check ownership before saving (editing) the vote"""
+		if not self.is_new():
+			self.check_ownership("modify")
+	
 	def validate(self):
 		""" Validate the vote before saving"""
 		self.validate_mandatory_fields()
@@ -31,6 +37,7 @@ class PollVote(Document):
 
 	def before_submit(self) -> None:
 		""" run actions before submitting the vote"""
+		self.check_ownership("submit")
 		poll_doc = frappe.get_cached_doc("Poll", self.poll)
 
 		if not self.user_is_in_target_audience(poll_doc):
@@ -77,6 +84,38 @@ class PollVote(Document):
 		""" Actions to perform when submitting the vote"""
 		# Increment the vote_count on the Poll Option
 		self.increment_vote_count()
+
+	def before_amend(self) -> None:
+		""" Check ownership before amending the vote"""
+		self.check_ownership("amend")
+	
+	def before_delete(self) -> None:
+		""" Check ownership before deleting the vote"""
+		self.check_ownership("delete")
+	
+	def check_ownership(self, action: str) -> None:
+		"""
+		Check if the current user owns this vote or is a System Manager.
+		Throws an error if the user is not the owner and not a System Manager.
+		
+		Args:
+			action: The action being performed (modify, submit, amend, delete)
+		"""
+		current_user = frappe.session.user
+		
+		# System Managers can perform any action
+		if frappe.db.get_value("User", current_user, "user_type") == "System Manager":
+			return
+		
+		# Other users can only perform actions on their own votes
+		if self.owner != current_user:
+			error_messages = {
+				"modify": _("You can only modify your own votes."),
+				"submit": _("You can only submit your own votes."),
+				"amend": _("You can only amend your own votes."),
+				"delete": _("You can only delete your own votes."),
+			}
+			frappe.throw(error_messages.get(action, _("You can only perform this action on your own votes.")))
 
 	def increment_vote_count(self):
 		""" Increment the vote count for the option"""
