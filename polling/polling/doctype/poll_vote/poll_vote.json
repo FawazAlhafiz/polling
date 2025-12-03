@@ -57,7 +57,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-26 03:35:52.907578",
+ "modified": "2025-12-03 01:10:08.722024",
  "modified_by": "Administrator",
  "module": "Polling",
  "name": "Poll Vote",
@@ -76,6 +76,8 @@
    "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -84,7 +86,9 @@
    "read": 1,
    "report": 1,
    "role": "Polling User",
+   "select": 1,
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
