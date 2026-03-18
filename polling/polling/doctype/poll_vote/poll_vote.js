@@ -5,6 +5,15 @@ frappe.ui.form.on("Poll Vote", {
     setup(frm) {
         frm.set_value("voter", frappe.session.user);
     },
+    refresh(frm) {
+        if (frm.is_new()) return;
+
+        const isOwner = frm.doc.owner === frappe.session.user;
+        if (!isOwner && !frappe.user.has_role("System Manager")) {
+            frm.set_read_only();
+            frm.disable_save();
+        }
+    },
     poll(frm) {
         if (!frm.doc.poll) return;
         frm.trigger("set_option_choices");
