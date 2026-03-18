@@ -91,15 +91,26 @@ class PollVote(Document):
 
 	def on_submit(self) -> None:
 		""" Actions to perform when submitting the vote"""
-		# Increment the vote_count on the Poll Option
 		self.increment_vote_count()
 
 	def before_amend(self) -> None:
-		""" Check ownership before amending the vote"""
-		self.check_ownership("amend")
-	
+		"""Vote amendments are not allowed. Votes are final once submitted."""
+		frappe.throw(_("Vote amendments are not allowed. Your vote is final once submitted."))
+
+	def before_cancel(self) -> None:
+		"""Only System Managers can cancel a submitted vote."""
+		current_user = frappe.session.user
+		if frappe.db.get_value("User", current_user, "user_type") != "System Manager":
+			frappe.throw(_("You cannot cancel a submitted vote."))
+
+	def on_cancel(self) -> None:
+		"""Decrement vote count when a submitted vote is cancelled."""
+		self.decrement_vote_count()
+
 	def before_delete(self) -> None:
-		""" Check ownership before deleting the vote"""
+		"""Block deletion of submitted votes; check ownership for drafts."""
+		if self.docstatus == 1:
+			frappe.throw(_("Submitted votes cannot be deleted. Cancel the vote first."))
 		self.check_ownership("delete")
 	
 	def check_ownership(self, action: str) -> None:
@@ -126,10 +137,16 @@ class PollVote(Document):
 			}
 			frappe.throw(error_messages.get(action, _("You can only perform this action on your own votes.")))
 
-	def increment_vote_count(self):
-		""" Increment the vote count for the option"""
-		option = frappe.get_cached_doc("Poll Option", {'parent': self.poll, 'option_text': self.option})
+	def increment_vote_count(self) -> None:
+		"""Increment the vote count for the selected option."""
+		option = frappe.get_doc("Poll Option", {"parent": self.poll, "option_text": self.option})
 		option.vote_count += 1
+		option.save()
+
+	def decrement_vote_count(self) -> None:
+		"""Decrement the vote count for the selected option when a vote is cancelled."""
+		option = frappe.get_doc("Poll Option", {"parent": self.poll, "option_text": self.option})
+		option.vote_count = max(0, option.vote_count - 1)
 		option.save()
 	
 
