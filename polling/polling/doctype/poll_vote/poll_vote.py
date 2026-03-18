@@ -15,7 +15,16 @@ class PollVote(Document):
 	def validate(self):
 		""" Validate the vote before saving"""
 		self.validate_mandatory_fields()
+		self.validate_voter_immutability()
 	
+
+	def validate_voter_immutability(self) -> None:
+		"""Ensure the voter field always matches the current user."""
+		current_user = frappe.session.user
+		if frappe.db.get_value("User", current_user, "user_type") == "System Manager":
+			return
+		if self.voter != current_user:
+			frappe.throw(_("The voter field cannot be set to another user."))
 
 	def validate_mandatory_fields(self) -> None:
 		""" 
