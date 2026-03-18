@@ -24,7 +24,7 @@ def has_permission(doc, ptype, user=None):
 		user = frappe.session.user
 	
 	# System Managers have full access
-	if frappe.db.get_value("User", user, "user_type") == "System Manager":
+	if "System Manager" in frappe.get_roles(user):
 		return True
 	
 	# Other users can only access their own votes

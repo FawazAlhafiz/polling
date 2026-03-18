@@ -21,7 +21,7 @@ class PollVote(Document):
 	def validate_voter_immutability(self) -> None:
 		"""Ensure the voter field always matches the current user."""
 		current_user = frappe.session.user
-		if frappe.db.get_value("User", current_user, "user_type") == "System Manager":
+		if "System Manager" in frappe.get_roles(current_user):
 			return
 		if self.voter != current_user:
 			frappe.throw(_("The voter field cannot be set to another user."))
@@ -100,7 +100,7 @@ class PollVote(Document):
 	def before_cancel(self) -> None:
 		"""Only System Managers can cancel a submitted vote."""
 		current_user = frappe.session.user
-		if frappe.db.get_value("User", current_user, "user_type") != "System Manager":
+		if "System Manager" not in frappe.get_roles(current_user):
 			frappe.throw(_("You cannot cancel a submitted vote."))
 
 	def on_cancel(self) -> None:
@@ -124,7 +124,7 @@ class PollVote(Document):
 		current_user = frappe.session.user
 		
 		# System Managers can perform any action
-		if frappe.db.get_value("User", current_user, "user_type") == "System Manager":
+		if "System Manager" in frappe.get_roles(current_user):
 			return
 		
 		# Other users can only perform actions on their own votes
