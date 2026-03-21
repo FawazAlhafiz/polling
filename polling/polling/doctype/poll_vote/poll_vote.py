@@ -7,13 +7,10 @@ from frappe.utils import getdate
 from frappe.model.document import Document
 
 class PollVote(Document):
-	def before_save(self) -> None:
-		""" Check ownership before saving (editing) the vote"""
-		if not self.is_new():
-			self.check_ownership("modify")
-	
 	def validate(self):
 		""" Validate the vote before saving"""
+		if not self.is_new():
+			self.check_ownership("modify")
 		self.validate_mandatory_fields()
 		self.validate_voter_immutability()
 	
@@ -107,7 +104,7 @@ class PollVote(Document):
 		"""Decrement vote count when a submitted vote is cancelled."""
 		self.decrement_vote_count()
 
-	def before_delete(self) -> None:
+	def on_trash(self) -> None:
 		"""Block deletion of submitted votes; check ownership for drafts."""
 		if self.docstatus == 1:
 			frappe.throw(_("Submitted votes cannot be deleted. Cancel the vote first."))

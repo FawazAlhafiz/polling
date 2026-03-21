@@ -13,21 +13,39 @@ from polling.polling.doctype.test_utils import get_vote_count, make_poll, make_v
 # ImplicitCommitError because commit() auto-calls begin() in this Frappe version.
 test_ignore = ["User"]
 
-
 _SAVEPOINT = "poll_vote_test"
+
+# Real User records created in PollVoteTestCase.setUpClass.
+# Frappe validates Link fields on insert, so fake emails would fail _validate_links.
+TEST_VOTER_1 = "voter1@test.com"
+TEST_VOTER_2 = "voter2@test.com"
 
 
 class PollVoteTestCase(FrappeTestCase):
 	"""
 	Base class for all PollVote tests.
 
-	setUp/tearDown use a DB savepoint instead of a full rollback so that:
-	  - The outer transaction (managed by the test runner) stays intact.
-	  - frappe.set_user() calls are always undone even if a test fails.
+	setUpClass creates two real Frappe User records (TEST_VOTER_1, TEST_VOTER_2)
+	so that the `voter` Link field passes Frappe's _validate_links check.
+	FrappeTestCase._rollback_db (registered via addClassCleanup) removes them
+	at the end of each test class — no tearDownClass needed.
 
-	Unlike frappe.db.rollback(), rollback(save_point=...) does NOT auto-call
-	begin(), avoiding ImplicitCommitError from double-begin scenarios.
+	setUp/tearDown use a DB savepoint so each test starts from a known state
+	without ending the outer transaction (which would trigger ImplicitCommitError
+	because rollback() auto-calls begin() in this Frappe version).
 	"""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		for email in (TEST_VOTER_1, TEST_VOTER_2):
+			if not frappe.db.exists("User", email):
+				frappe.get_doc({
+					"doctype": "User",
+					"email": email,
+					"first_name": email.split("@")[0],
+					"send_welcome_email": 0,
+				}).insert(ignore_permissions=True)
 
 	def setUp(self):
 		self._original_user = frappe.session.user
@@ -73,10 +91,14 @@ class TestVoterImmutability(PollVoteTestCase):
 		self.poll = make_poll()
 
 	def test_regular_user_cannot_set_voter_to_another_user(self):
+		# Log in as TEST_VOTER_1, then try to create a vote with voter=TEST_VOTER_2.
+		# Both users exist (link validation passes), but our custom check fires
+		# because current_user != voter.
+		frappe.set_user(TEST_VOTER_1)
 		vote = frappe.get_doc({
 			"doctype": "Poll Vote",
 			"poll": self.poll.name,
-			"voter": "some.other.user@example.com",
+			"voter": TEST_VOTER_2,
 			"option": "Yes",
 		})
 		with self.assertRaisesRegex(ValidationError, "voter field cannot be set to another user"):
@@ -84,14 +106,12 @@ class TestVoterImmutability(PollVoteTestCase):
 
 	def test_system_manager_can_create_vote_for_another_user(self):
 		frappe.set_user("Administrator")
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes")
-		self.assertEqual(vote.voter, "voter1@example.com")
+		vote = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes")
+		self.assertEqual(vote.voter, TEST_VOTER_1)
 
 
 # ---------------------------------------------------------------------------
-# Poll Status — tests only read the poll, never mutate it.
-# One poll per status is created in setUpClass and shared across all tests
-# in the class. tearDownClass rolls them back once instead of per-test.
+# Poll Status — polls are created once per class, votes per test
 # ---------------------------------------------------------------------------
 
 class TestPollStatusOnSubmit(PollVoteTestCase):
@@ -154,8 +174,6 @@ class TestDateValidationOnSubmit(PollVoteTestCase):
 class TestDuplicateVote(PollVoteTestCase):
 	def setUp(self):
 		super().setUp()
-		# Fresh poll per test — votes are submitted (mutating vote_count),
-		# so tests must not share the same poll.
 		self.poll = make_poll(status="Active")
 
 	def test_second_vote_same_user_raises(self):
@@ -166,8 +184,8 @@ class TestDuplicateVote(PollVoteTestCase):
 
 	def test_two_different_users_can_vote_on_same_poll(self):
 		frappe.set_user("Administrator")
-		vote1 = make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
-		vote2 = make_vote(self.poll.name, voter="voter2@example.com", option="No", submit=True)
+		vote1 = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes", submit=True)
+		vote2 = make_vote(self.poll.name, voter=TEST_VOTER_2, option="No", submit=True)
 		self.assertEqual(vote1.docstatus, 1)
 		self.assertEqual(vote2.docstatus, 1)
 
@@ -178,8 +196,8 @@ class TestDuplicateVote(PollVoteTestCase):
 
 class TestVoteCount(PollVoteTestCase):
 	"""
-	Every test here submits or cancels votes, so the poll is recreated
-	fresh in setUp to prevent one test's vote from affecting another's count.
+	Every test submits or cancels votes, so the poll is created fresh per test
+	to prevent one test's vote_count from affecting another's assertion.
 	"""
 
 	def setUp(self):
@@ -189,18 +207,18 @@ class TestVoteCount(PollVoteTestCase):
 
 	def test_vote_count_increments_on_submit(self):
 		count_before = get_vote_count(self.poll.name, "Yes")
-		make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
+		make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes", submit=True)
 		self.assertEqual(get_vote_count(self.poll.name, "Yes"), count_before + 1)
 
 	def test_vote_count_decrements_on_cancel(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
+		vote = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes", submit=True)
 		count_after_submit = get_vote_count(self.poll.name, "Yes")
 		vote.cancel()
 		self.assertEqual(get_vote_count(self.poll.name, "Yes"), count_after_submit - 1)
 
 	def test_vote_count_floor_is_zero(self):
 		"""max(0, ...) guard — count must never go negative."""
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
+		vote = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes", submit=True)
 		frappe.db.set_value("Poll Option", {"parent": self.poll.name, "option_text": "Yes"}, "vote_count", 0)
 		vote.cancel()
 		self.assertEqual(get_vote_count(self.poll.name, "Yes"), 0)
@@ -217,29 +235,35 @@ class TestLifecycleGuards(PollVoteTestCase):
 		self.poll = make_poll(status="Active")
 
 	def test_amendment_is_blocked(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
+		# voter="Administrator": always a valid User, System Manager bypasses immutability check.
+		# Frappe v15 has no Document.amend() — call before_amend() directly to test the guard.
+		vote = make_vote(self.poll.name, voter="Administrator", option="Yes", submit=True)
 		with self.assertRaisesRegex(ValidationError, "amendments are not allowed"):
-			vote.amend()
+			vote.before_amend()
 
 	def test_regular_user_cannot_cancel_submitted_vote(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
-		frappe.set_user(vote.owner)
+		# before_cancel is role-based (System Manager), not owner-based.
+		# Submit as Administrator, then switch to a regular user to attempt cancel.
+		vote = make_vote(self.poll.name, voter="Administrator", option="Yes", submit=True)
+		frappe.set_user(TEST_VOTER_1)
 		with self.assertRaisesRegex(ValidationError, "cannot cancel"):
 			vote.cancel()
 
 	def test_system_manager_can_cancel_submitted_vote(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
+		vote = make_vote(self.poll.name, voter="Administrator", option="Yes", submit=True)
 		vote.cancel()
 		self.assertEqual(vote.docstatus, 2)
 
 	def test_cannot_delete_submitted_vote(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes", submit=True)
+		vote = make_vote(self.poll.name, voter="Administrator", option="Yes", submit=True)
 		with self.assertRaisesRegex(ValidationError, "cannot be deleted"):
 			vote.delete()
 
 	def test_owner_can_delete_draft_vote(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes")
-		frappe.set_user(vote.owner)
+		# Insert as TEST_VOTER_1 so that owner=TEST_VOTER_1 (not Administrator).
+		# Then TEST_VOTER_1 deletes their own draft — tests the non-System-Manager path.
+		frappe.set_user(TEST_VOTER_1)
+		vote = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes")
 		vote.delete()  # must not raise
 
 
@@ -254,20 +278,28 @@ class TestOwnership(PollVoteTestCase):
 		self.poll = make_poll(status="Active")
 
 	def test_non_owner_cannot_edit_vote(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes")
-		frappe.set_user("voter2@example.com")
+		# Insert as TEST_VOTER_1 so owner=TEST_VOTER_1, then switch to TEST_VOTER_2.
+		frappe.set_user(TEST_VOTER_1)
+		vote = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes")
+		frappe.set_user(TEST_VOTER_2)
 		vote.option = "No"
 		with self.assertRaisesRegex(ValidationError, "only modify your own votes"):
 			vote.save()
 
 	def test_system_manager_can_edit_any_vote(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes")
+		# vote owned by TEST_VOTER_1; Administrator (System Manager) edits it
+		frappe.set_user(TEST_VOTER_1)
+		vote = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes")
+		frappe.set_user("Administrator")
 		vote.option = "No"
 		vote.save()
 		self.assertEqual(vote.option, "No")
 
 	def test_non_owner_cannot_delete_draft(self):
-		vote = make_vote(self.poll.name, voter="voter1@example.com", option="Yes")
-		frappe.set_user("voter2@example.com")
+		# Use ignore_permissions=True so Frappe's role-based permission check is skipped
+		# and our on_trash ownership guard fires.
+		frappe.set_user(TEST_VOTER_1)
+		vote = make_vote(self.poll.name, voter=TEST_VOTER_1, option="Yes")
+		frappe.set_user(TEST_VOTER_2)
 		with self.assertRaisesRegex(ValidationError, "only delete your own votes"):
-			vote.delete()
+			vote.delete(ignore_permissions=True)
