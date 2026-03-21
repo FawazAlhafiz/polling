@@ -59,6 +59,7 @@ class PollVote(Document):
 			frappe.throw("You have already voted in this poll.")
 
 
+	# TODO: Implement actual target audience logic based on your application's requirements
 	def user_is_in_target_audience(self, poll) -> bool:
 		return True
 	# 	""" Check if the user is in the target audience of the poll"""
