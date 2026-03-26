@@ -10,6 +10,9 @@
   "column_break_ccfv",
   "start_date",
   "end_date",
+  "notify_before_expiry",
+  "notify_hours_before",
+  "expiry_notification_sent",
   "allow_multiple_answers",
   "poll_type",
   "status",
@@ -37,6 +40,28 @@
    "fieldname": "end_date",
    "fieldtype": "Datetime",
    "label": "End Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "notify_before_expiry",
+   "fieldtype": "Check",
+   "label": "Notify Before Expiry"
+  },
+  {
+   "default": "24",
+   "depends_on": "eval:doc.notify_before_expiry",
+   "fieldname": "notify_hours_before",
+   "fieldtype": "Int",
+   "label": "Hours Before Expiry",
+   "mandatory_depends_on": "eval:doc.notify_before_expiry"
+  },
+  {
+   "default": "0",
+   "fieldname": "expiry_notification_sent",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Expiry Notification Sent",
+   "read_only": 1
   },
   {
    "default": "0",
