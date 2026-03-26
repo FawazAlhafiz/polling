@@ -146,9 +146,9 @@ pre-commit install
 
 **Configured tools:**
 - **ruff**: Python linting and formatting
-- **eslint**: JavaScript/Vue.js linting
-- **prettier**: Code formatting
-- **pyupgrade**: Python syntax upgrading
+- **biome**: JavaScript/Vue.js linting and formatting (`yarn lint`)
+- **eslint**: JavaScript linting (pre-commit hook)
+- **prettier**: JavaScript/Vue/SCSS formatting (pre-commit hook)
 
 ## 📦 Dependencies
 
