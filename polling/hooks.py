@@ -148,23 +148,11 @@ has_permission = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"polling.tasks.all"
-# 	],
-# 	"daily": [
-# 		"polling.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"polling.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"polling.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"polling.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"hourly": [
+		"polling.tasks.send_expiry_notifications",
+	],
+}
 
 # Testing
 # -------
