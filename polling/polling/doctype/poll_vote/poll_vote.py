@@ -3,7 +3,7 @@
 
 import frappe
 from frappe import _
-from frappe.utils import getdate
+from frappe.utils import getdate, now_datetime, get_datetime
 from frappe.model.document import Document
 
 class PollVote(Document):
@@ -78,8 +78,8 @@ class PollVote(Document):
 	def is_valid_date(self, poll: Document) -> bool:
 		""" Check if the poll is still open for voting based on end_date"""
 		if poll and poll.end_date:
-			return poll.end_date >= getdate()
-		
+			return get_datetime(poll.end_date) >= now_datetime()
+
 		return True
 		
 	def user_has_voted(self) -> bool:
