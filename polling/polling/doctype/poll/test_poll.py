@@ -168,14 +168,27 @@ class TestExpiryNotification(FrappeTestCase):
 		mock_sendmail.assert_not_called()
 
 	@patch("polling.tasks.frappe.sendmail")
-	@patch("polling.tasks.frappe.db.get_value", return_value=None)
-	def test_no_owner_email_when_no_email_address(self, _mock_get_value, mock_sendmail):
-		"""Owner with no email address is skipped without crashing."""
+	def test_no_owner_email_when_no_email_address(self, mock_sendmail):
+		"""_notify_owner silently skips when the owner has no email address."""
 		poll = self._make_notifiable_poll()
+		owner_email = frappe.db.get_value("User", poll.owner, "email")
 
-		send_expiry_notifications()
+		original_get_value = frappe.db.get_value
 
-		mock_sendmail.assert_not_called()
+		def mock_user_email_as_none(doctype, *args, **kwargs):
+			if doctype == "User":
+				return None
+			return original_get_value(doctype, *args, **kwargs)
+
+		with patch("polling.tasks.frappe.db.get_value", side_effect=mock_user_email_as_none):
+			send_expiry_notifications()
+
+		# Owner-addressed email must not have been sent
+		owner_calls = [
+			c for c in mock_sendmail.call_args_list
+			if owner_email in c.kwargs.get("recipients", [])
+		]
+		self.assertEqual(len(owner_calls), 0)
 
 	# ------------------------------------------------------------------
 	# tasks.py: voter notifications
@@ -188,11 +201,14 @@ class TestExpiryNotification(FrappeTestCase):
 		poll = self._make_notifiable_poll()
 
 		def fake_get_all(doctype, *args, **kwargs):
+			if doctype == "Poll":
+				return [frappe._dict(name=poll.name, title=poll.title, end_date=poll.end_date,
+					notify_hours_before=poll.notify_hours_before, owner=poll.owner)]
 			if doctype == "Poll Vote":
 				return []  # nobody has voted
 			if doctype == "User":
-				return [{"name": "voter@example.com", "email": "voter@example.com"}]
-			return frappe.get_all.__wrapped__(doctype, *args, **kwargs)
+				return [frappe._dict(name="voter@example.com", email="voter@example.com")]
+			return []
 
 		mock_get_all.side_effect = fake_get_all
 
@@ -211,11 +227,14 @@ class TestExpiryNotification(FrappeTestCase):
 		poll = self._make_notifiable_poll()
 
 		def fake_get_all(doctype, *args, **kwargs):
+			if doctype == "Poll":
+				return [frappe._dict(name=poll.name, title=poll.title, end_date=poll.end_date,
+					notify_hours_before=poll.notify_hours_before, owner=poll.owner)]
 			if doctype == "Poll Vote":
-				return [{"voter": "voter@example.com"}]
+				return [frappe._dict(voter="voter@example.com")]
 			if doctype == "User":
-				return [{"name": "voter@example.com", "email": "voter@example.com"}]
-			return frappe.get_all.__wrapped__(doctype, *args, **kwargs)
+				return [frappe._dict(name="voter@example.com", email="voter@example.com")]
+			return []
 
 		mock_get_all.side_effect = fake_get_all
 
@@ -234,13 +253,16 @@ class TestExpiryNotification(FrappeTestCase):
 		poll = self._make_notifiable_poll()
 
 		def fake_get_all(doctype, *args, **kwargs):
+			if doctype == "Poll":
+				return [frappe._dict(name=poll.name, title=poll.title, end_date=poll.end_date,
+					notify_hours_before=poll.notify_hours_before, owner=poll.owner)]
 			if doctype == "Poll Vote":
 				return []
 			if doctype == "User":
-				# Simulate the User query returning no results (owner is already filtered
-				# out by the ["!=", poll.owner] filter passed to frappe.get_all)
+				# Owner is already excluded by the ["!=", poll.owner] filter;
+				# simulate that by returning an empty list.
 				return []
-			return frappe.get_all.__wrapped__(doctype, *args, **kwargs)
+			return []
 
 		mock_get_all.side_effect = fake_get_all
 
@@ -259,11 +281,14 @@ class TestExpiryNotification(FrappeTestCase):
 		poll = self._make_notifiable_poll()
 
 		def fake_get_all(doctype, *args, **kwargs):
+			if doctype == "Poll":
+				return [frappe._dict(name=poll.name, title=poll.title, end_date=poll.end_date,
+					notify_hours_before=poll.notify_hours_before, owner=poll.owner)]
 			if doctype == "Poll Vote":
 				return []
 			if doctype == "User":
-				return [{"name": "noemail@example.com", "email": ""}]
-			return frappe.get_all.__wrapped__(doctype, *args, **kwargs)
+				return [frappe._dict(name="noemail@example.com", email="")]
+			return []
 
 		mock_get_all.side_effect = fake_get_all
 
