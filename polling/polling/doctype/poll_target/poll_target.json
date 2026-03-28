@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "user",
-  "role"
+  "role",
+  "department"
  ],
  "fields": [
   {
@@ -21,6 +22,12 @@
    "fieldtype": "Link",
    "label": "Role",
    "options": "Role"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
   }
  ],
  "grid_page_length": 50,

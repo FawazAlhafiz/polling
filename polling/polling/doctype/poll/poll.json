@@ -18,7 +18,7 @@
   "status",
   "section_break_ocxy",
   "options",
-  "targer_audience"
+  "target_audience"
  ],
  "fields": [
   {
@@ -76,9 +76,9 @@
    "options": "Public\nPrivate"
   },
   {
-   "fieldname": "targer_audience",
+   "fieldname": "target_audience",
    "fieldtype": "Table",
-   "label": "Targer Audience",
+   "label": "Target Audience",
    "options": "Poll Target"
   },
   {

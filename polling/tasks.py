@@ -4,6 +4,8 @@
 import frappe
 from frappe.utils import now_datetime, get_datetime, add_to_date
 
+from polling.polling.doctype.poll_vote.poll_vote import _resolve_audience_users
+
 
 def send_expiry_notifications():
 	"""Hourly task: send expiry notifications for opted-in polls whose window is now.
@@ -60,22 +62,32 @@ def _notify_owner(poll):
 
 
 def _notify_non_voters(poll):
-	"""Notify active system users who have not yet voted on this poll.
+	"""Notify users who have not yet voted on this poll.
 
 	The poll owner is excluded — they receive a separate owner email.
 
-	NOTE: Once Issue #9 (target audience filtering) is implemented, update
-	this function to scope recipients to poll.target_audience when that child
-	table is non-empty, instead of notifying all system users.
+	When ``target_audience`` is non-empty, only users in the resolved audience
+	(by explicit user, role, or department) are notified. When it is empty the
+	notification is sent to all active system users.
 	"""
+	poll_doc = frappe.get_doc("Poll", poll.name)
+
 	votes = frappe.get_all("Poll Vote", filters={"poll": poll.name}, fields=["voter"])
 	already_voted = {v.voter for v in votes}
 
-	users = frappe.get_all(
-		"User",
-		filters={"enabled": 1, "user_type": "System User", "name": ["!=", poll.owner]},
-		fields=["name", "email"],
-	)
+	if poll_doc.target_audience:
+		allowed_users = _resolve_audience_users(poll_doc) - {poll.owner}
+		users = frappe.get_all(
+			"User",
+			filters={"enabled": 1, "name": ["in", list(allowed_users)]},
+			fields=["name", "email"],
+		)
+	else:
+		users = frappe.get_all(
+			"User",
+			filters={"enabled": 1, "user_type": "System User", "name": ["!=", poll.owner]},
+			fields=["name", "email"],
+		)
 
 	for user in users:
 		if user.name in already_voted or not user.email:

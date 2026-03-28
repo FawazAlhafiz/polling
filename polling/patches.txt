@@ -6,3 +6,5 @@
 # Patches added in this section will be executed after doctypes are migrated
 polling.polling.patches.v15_0.create_setup_rules
 polling.polling.patches.v15_0.convert_end_dates_to_end_of_day
+polling.polling.patches.v15_1.add_department_to_poll_target
+polling.polling.patches.v15_1.rename_targer_audience_to_target_audience

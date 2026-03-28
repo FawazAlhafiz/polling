@@ -11,6 +11,11 @@ from frappe.utils import add_to_date, now_datetime
 from polling.polling.doctype.test_utils import make_poll
 from polling.tasks import send_expiry_notifications
 
+# Department is an ERPNext/HRMS DocType not present in plain Frappe.
+# Poll → Poll Target has a Link to Department; prevent the test runner from
+# trying to resolve it as a dependency.
+test_ignore = ["Department"]
+
 
 class TestPollTitleValidation(FrappeTestCase):
 	"""

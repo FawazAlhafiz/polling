@@ -59,14 +59,16 @@ class PollVote(Document):
 			frappe.throw("You have already voted in this poll.")
 
 
-	# TODO: Implement actual target audience logic based on your application's requirements
 	def user_is_in_target_audience(self, poll) -> bool:
-		return True
-	# 	""" Check if the user is in the target audience of the poll"""
-	# 	if self.poll and poll.target_audience:
-	# 		return self.voter in poll.target_audience
-		
-		# return True  # If no target audience is set, allow voting by default
+		"""Check if the voter is in the poll's target audience.
+
+		Returns True when the target_audience child table is empty (open poll).
+		Otherwise the voter must be matched by at least one of: explicit user,
+		Frappe role, or department membership (via Employee record).
+		"""
+		if not poll.target_audience:
+			return True
+		return self.voter in _resolve_audience_users(poll)
 	
 	def poll_is_active(self, poll: Document) -> bool:
 		""" Check if the poll is active"""
@@ -147,6 +149,48 @@ class PollVote(Document):
 		option.vote_count = max(0, option.vote_count - 1)
 		option.save()
 	
+
+def _resolve_audience_users(poll) -> set:
+	"""Return the set of user IDs allowed to participate in *poll*.
+
+	Resolves all three targeting dimensions from `poll.target_audience`:
+	  - ``user``       — explicit Frappe User name
+	  - ``role``       — every User that holds this Frappe Role
+	  - ``department`` — every active Employee whose department matches
+	                     (requires ERPNext/HRMS; gracefully skipped if the
+	                     Employee DocType is unavailable)
+
+	Called by both ``PollVote.user_is_in_target_audience()`` and
+	``tasks._notify_non_voters()`` to keep the resolution logic in one place.
+	"""
+	allowed: set = set()
+
+	explicit_users = {row.user for row in poll.target_audience if row.user}
+	allowed.update(explicit_users)
+
+	for row in poll.target_audience:
+		if not row.role:
+			continue
+		users_with_role = frappe.get_all(
+			"Has Role",
+			filters={"role": row.role, "parenttype": "User"},
+			fields=["parent"],
+		)
+		allowed.update(u.parent for u in users_with_role)
+
+	if frappe.db.exists("DocType", "Employee"):
+		for row in poll.target_audience:
+			if not row.department:
+				continue
+			employees = frappe.get_all(
+				"Employee",
+				filters={"department": row.department, "status": "Active"},
+				fields=["user_id"],
+			)
+			allowed.update(e.user_id for e in employees if e.user_id)
+
+	return allowed
+
 
 @frappe.whitelist()
 def get_poll_options(parent_poll):

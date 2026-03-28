@@ -7,7 +7,7 @@
 import frappe
 
 
-def make_poll(title="Test Poll", status="Active", start_date="2026-01-01 00:00:00", end_date="2026-12-31 23:59:59", options=None):
+def make_poll(title="Test Poll", status="Active", start_date="2026-01-01 00:00:00", end_date="2026-12-31 23:59:59", options=None, target_audience=None):
 	if options is None:
 		options = ["Yes", "No", "Maybe"]
 
@@ -18,6 +18,7 @@ def make_poll(title="Test Poll", status="Active", start_date="2026-01-01 00:00:0
 		"start_date": start_date,
 		"end_date": end_date,
 		"options": [{"option_text": opt} for opt in options],
+		"target_audience": target_audience or [],
 	})
 	poll.insert(ignore_permissions=True)
 	return poll

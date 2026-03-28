@@ -11,7 +11,7 @@ from polling.polling.doctype.test_utils import get_vote_count, make_poll, make_v
 # Poll Vote has a Link field to User; without this, make_test_records commits
 # User test data before _run_unittest calls frappe.db.begin(), triggering an
 # ImplicitCommitError because commit() auto-calls begin() in this Frappe version.
-test_ignore = ["User"]
+test_ignore = ["User", "Department"]
 
 _SAVEPOINT = "poll_vote_test"
 
@@ -303,3 +303,79 @@ class TestOwnership(PollVoteTestCase):
 		frappe.set_user(TEST_VOTER_2)
 		with self.assertRaisesRegex(ValidationError, "only delete your own votes"):
 			vote.delete(ignore_permissions=True)
+
+
+# ---------------------------------------------------------------------------
+# Target Audience
+# ---------------------------------------------------------------------------
+
+class TestTargetAudience(PollVoteTestCase):
+	"""Verifies target audience enforcement during vote submission.
+
+	Tests cover three targeting dimensions:
+	  - Explicit user listing
+	  - Frappe role membership
+	  - Empty audience (open poll)
+
+	Department-based targeting requires ERPNext/HRMS and is not tested here.
+	"""
+
+	def setUp(self):
+		super().setUp()
+		frappe.set_user("Administrator")
+
+	def test_user_not_in_audience_cannot_vote(self):
+		# Poll restricted to TEST_VOTER_1 only; TEST_VOTER_2 should be blocked.
+		poll = make_poll(
+			status="Active",
+			target_audience=[{"user": TEST_VOTER_1, "role": None, "department": None}],
+		)
+		frappe.set_user(TEST_VOTER_2)
+		vote = make_vote(poll.name, voter=TEST_VOTER_2, option="Yes")
+		with self.assertRaisesRegex(ValidationError, "not in the target audience"):
+			vote.submit()
+
+	def test_user_in_audience_by_user_field_can_vote(self):
+		# TEST_VOTER_1 is explicitly listed — submit should succeed.
+		poll = make_poll(
+			status="Active",
+			target_audience=[{"user": TEST_VOTER_1, "role": None, "department": None}],
+		)
+		frappe.set_user(TEST_VOTER_1)
+		vote = make_vote(poll.name, voter=TEST_VOTER_1, option="Yes", submit=True)
+		self.assertEqual(vote.docstatus, 1)
+
+	def test_empty_audience_allows_all_users(self):
+		# No target_audience rows → poll is open to everyone.
+		poll = make_poll(status="Active", target_audience=[])
+		frappe.set_user(TEST_VOTER_1)
+		vote = make_vote(poll.name, voter=TEST_VOTER_1, option="Yes", submit=True)
+		self.assertEqual(vote.docstatus, 1)
+
+	def test_user_in_audience_by_role_can_vote(self):
+		# "Polling User" role is created by the app's after_install hook.
+		# Assign it to TEST_VOTER_1 and restrict the poll to that role.
+		role_name = "Polling User"
+		if not frappe.db.exists("Role", role_name):
+			self.skipTest(f"Role '{role_name}' not found — skipping role-based audience test")
+
+		# Only insert the Has Role record if the user doesn't already have it.
+		already_has_role = frappe.db.exists(
+			"Has Role", {"parent": TEST_VOTER_1, "parenttype": "User", "role": role_name}
+		)
+		if not already_has_role:
+			frappe.get_doc({
+				"doctype": "Has Role",
+				"parent": TEST_VOTER_1,
+				"parenttype": "User",
+				"parentfield": "roles",
+				"role": role_name,
+			}).insert(ignore_permissions=True)
+
+		poll = make_poll(
+			status="Active",
+			target_audience=[{"user": None, "role": role_name, "department": None}],
+		)
+		frappe.set_user(TEST_VOTER_1)
+		vote = make_vote(poll.name, voter=TEST_VOTER_1, option="Yes", submit=True)
+		self.assertEqual(vote.docstatus, 1)
