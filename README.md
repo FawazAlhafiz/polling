@@ -14,6 +14,8 @@
 - **Real-time Participation**: Vote on active polls with instant feedback
 - **Results Visualization**: View poll results with clear data presentation
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- **Target Audience**: Restrict polls to specific users, Frappe roles, or departments (ERPNext/HRMS)
+- **Expiry Notifications**: Notify poll owners and eligible voters before a poll closes
 
 ### 🎨 **Modern UI/UX**
 - **Clean Card-based Layout**: Professional, easy-to-scan poll cards
@@ -30,13 +32,16 @@
 - **Tailwind CSS**: Utility-first styling for consistent design
 - **Frappe UI Components**: Native integration with Frappe UI library
 - **Date Management**: Smart date formatting and poll scheduling
+- **Audience Resolution**: Efficiently resolves allowed voters by user, role, and department membership
+- **Scheduled Tasks**: Hourly expiry notification job scoped to the target audience
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - [Frappe Bench](https://github.com/frappe/bench) installed
 - Node.js and Yarn for frontend development
-- Python 3.8+ for backend
+- Python 3.10+ for backend
+- ERPNext/HRMS *(optional)* — required only for department-based audience targeting
 
 ### Installation
 
@@ -80,9 +85,16 @@ yarn dev
 polling/
 ├── polling/
 │   ├── doctype/
-│   │   └── poll/          # Poll DocType with status management
-│   ├── www/               # Web pages and API endpoints
-│   └── public/            # Static assets
+│   │   ├── poll/              # Poll DocType — title, dates, status, target audience, options
+│   │   ├── poll_option/       # Child table — vote options with vote counts
+│   │   ├── poll_vote/         # Submittable DocType — records each cast vote
+│   │   ├── poll_target/       # Child table — audience rows (user / role / department)
+│   │   └── poll_result/       # Virtual DocType — computed results on-the-fly
+│   ├── tasks.py               # Scheduled tasks (hourly expiry notifications)
+│   ├── permissions.py         # Owner-based access control for Poll Vote
+│   ├── patches/               # Database migration patches
+│   ├── www/                   # Web pages served by Frappe
+│   └── public/                # Static assets
 ```
 
 ### Frontend (Vue.js)
@@ -90,12 +102,35 @@ polling/
 frontend/
 ├── src/
 │   ├── pages/
-│   │   └── Polls.vue      # Main polls interface
-│   ├── components/        # Reusable Vue components
-│   └── router/            # Vue Router configuration
-├── package.json           # Dependencies and scripts
-└── vite.config.js         # Build configuration
+│   │   ├── Polls.vue          # Main polls listing + voting interface
+│   │   └── PollResults.vue    # Results page with vote distribution
+│   ├── components/            # Reusable Vue components
+│   ├── data/
+│   │   └── session.js         # Reactive session / auth state
+│   └── router.js              # Vue Router with auth guards
+├── package.json               # Dependencies and scripts
+└── vite.config.js             # Build configuration
 ```
+
+### Key DocTypes
+
+| DocType | Type | Description |
+|---|---|---|
+| **Poll** | Regular | Core document — title, dates, status, options, target audience |
+| **Poll Option** | Child table | Vote options; `vote_count` increments on submission |
+| **Poll Vote** | Submittable | One record per cast vote; enforces audience, date, and dedup checks |
+| **Poll Target** | Child table | Audience rows: `user`, `role`, or `department` (ERPNext/HRMS) |
+| **Poll Result** | Virtual | Computes vote distribution on-the-fly from Poll + Poll Option data |
+
+### Target Audience
+
+When a poll has rows in its `target_audience` child table, only matching users may vote and receive expiry notifications. A voter is allowed if they match **any** of the following:
+
+- **User** — their Frappe user account is listed explicitly
+- **Role** — they hold one of the listed Frappe roles
+- **Department** — they are an active Employee in one of the listed departments *(requires ERPNext/HRMS)*
+
+Polls with an empty `target_audience` are open to all users.
 
 ## 🛠️ Development
 
@@ -150,11 +185,22 @@ pre-commit install
 - **eslint**: JavaScript linting (pre-commit hook)
 - **prettier**: JavaScript/Vue/SCSS formatting (pre-commit hook)
 
+### Running Tests
+
+```bash
+# Run all app tests
+bench run-tests --app polling
+
+# Run tests for a specific DocType
+bench run-tests --app polling --doctype "Poll Vote"
+bench run-tests --app polling --doctype "Poll"
+```
+
 ## 📦 Dependencies
 
 ### Backend
 - **Frappe Framework**: Core backend framework
-- **Python 3.8+**: Runtime environment
+- **Python 3.10+**: Runtime environment
 
 ### Frontend
 - **Vue.js 3.x**: Progressive JavaScript framework
